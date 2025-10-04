@@ -1,41 +1,61 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const express = require("express");
+const path = require("path");
+const fs = require("fs");
+
 const app = express();
-const PORT = process.env.PORT || 5000;
-const DATA_FILE = path.join(__dirname, 'data.json');
+const PORT = process.env.PORT || 3000; // ✅ Render will set PORT
 
 app.use(express.json());
 
-// serve frontend static files
-const frontendDir = path.join(__dirname, '..', 'frontend');
-app.use(express.static(frontendDir));
+// Path to data.json
+const dataFile = path.join(__dirname, "data.json");
 
-// simple helpers
-function readData(){ try{ return JSON.parse(fs.readFileSync(DATA_FILE)); }catch(e){ return []; } }
-function writeData(d){ fs.writeFileSync(DATA_FILE, JSON.stringify(d, null, 2)); }
+// Serve frontend
+app.use(express.static(path.join(__dirname, "../frontend")));
 
-// API - relative path /api/items
-app.get('/api/items', (req, res) => res.json(readData()));
-app.post('/api/items', (req, res) => {
-  const data = readData();
-  const item = { id: Date.now(), name: req.body.name || 'Untitled' };
-  data.push(item); writeData(data); res.json(item);
-});
-app.put('/api/items/:id', (req, res) => {
-  let data = readData();
-  const id = Number(req.params.id);
-  data = data.map(it => it.id === id ? { ...it, name: req.body.name } : it);
-  writeData(data); res.json({ message: 'updated' });
-});
-app.delete('/api/items/:id', (req, res) => {
-  let data = readData();
-  const id = Number(req.params.id);
-  data = data.filter(it => it.id !== id);
-  writeData(data); res.json({ message: 'deleted' });
+// Read all items
+app.get("/api/items", (req, res) => {
+  const data = JSON.parse(fs.readFileSync(dataFile));
+  res.json(data);
 });
 
-// any other route, serve index.html (for single page)
-app.get('*', (req, res) => res.sendFile(path.join(frontendDir, 'index.html')));
+// Create new item
+app.post("/api/items", (req, res) => {
+  const data = JSON.parse(fs.readFileSync(dataFile));
+  const newItem = { id: Date.now(), ...req.body };
+  data.push(newItem);
+  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+  res.json(newItem);
+});
 
-app.listen(PORT, ()=> console.log(`Server running on port ${PORT}`));
+// Update item
+app.put("/api/items/:id", (req, res) => {
+  const data = JSON.parse(fs.readFileSync(dataFile));
+  const id = parseInt(req.params.id);
+  const index = data.findIndex(item => item.id === id);
+  if (index !== -1) {
+    data[index] = { ...data[index], ...req.body };
+    fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+    res.json(data[index]);
+  } else {
+    res.status(404).json({ message: "Item not found" });
+  }
+});
+
+// Delete item
+app.delete("/api/items/:id", (req, res) => {
+  let data = JSON.parse(fs.readFileSync(dataFile));
+  const id = parseInt(req.params.id);
+  data = data.filter(item => item.id !== id);
+  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+  res.json({ message: "Item deleted" });
+});
+
+// ✅ Test route
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Server is working!" });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});

@@ -1,4 +1,4 @@
-const API = "/api/items"; // relative path works with Express
+const API = "/api/items";
 const input = document.getElementById("itemInput");
 const list = document.getElementById("itemList");
 const addBtn = document.getElementById("addBtn");
@@ -14,8 +14,10 @@ async function fetchItems() {
       const li = document.createElement("li");
       li.innerHTML = `
         ${item.name}
-        <button onclick="editItem(${item.id}, '${escapeHtml(item.name)}')">Edit</button>
-        <button onclick="deleteItem(${item.id})">Delete</button>
+        <div>
+          <button onclick="editItem(${item.id}, '${escapeHtml(item.name)}')">Edit</button>
+          <button onclick="deleteItem(${item.id})">Delete</button>
+        </div>
       `;
       list.appendChild(li);
     });
@@ -52,7 +54,6 @@ async function deleteItem(id) {
   fetchItems();
 }
 
-// Escape quotes to prevent JS errors
 function escapeHtml(str) {
   return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
 }

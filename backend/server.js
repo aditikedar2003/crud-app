@@ -3,23 +3,24 @@ const path = require("path");
 const fs = require("fs");
 
 const app = express();
-const PORT = process.env.PORT || 3000; // ✅ Render will set PORT
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
 // Path to data.json
 const dataFile = path.join(__dirname, "data.json");
+// Create empty data.json if it doesn't exist
+if (!fs.existsSync(dataFile)) fs.writeFileSync(dataFile, "[]");
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// Read all items
+// API routes
 app.get("/api/items", (req, res) => {
   const data = JSON.parse(fs.readFileSync(dataFile));
   res.json(data);
 });
 
-// Create new item
 app.post("/api/items", (req, res) => {
   const data = JSON.parse(fs.readFileSync(dataFile));
   const newItem = { id: Date.now(), ...req.body };
@@ -28,7 +29,6 @@ app.post("/api/items", (req, res) => {
   res.json(newItem);
 });
 
-// Update item
 app.put("/api/items/:id", (req, res) => {
   const data = JSON.parse(fs.readFileSync(dataFile));
   const id = parseInt(req.params.id);
@@ -42,7 +42,6 @@ app.put("/api/items/:id", (req, res) => {
   }
 });
 
-// Delete item
 app.delete("/api/items/:id", (req, res) => {
   let data = JSON.parse(fs.readFileSync(dataFile));
   const id = parseInt(req.params.id);
@@ -51,7 +50,7 @@ app.delete("/api/items/:id", (req, res) => {
   res.json({ message: "Item deleted" });
 });
 
-// ✅ Test route
+// Test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is working!" });
 });
